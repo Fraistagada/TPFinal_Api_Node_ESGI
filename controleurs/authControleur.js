@@ -28,7 +28,7 @@ async function signup(req, res) {
 
     res.json({ message: "Compte créé" });
   } catch (erreur) {
-    res.status(500).json({ message: erreur.message });
+    res.status(500).json({ message: "Erreur serveur" });
   }
 }
 
@@ -57,9 +57,13 @@ async function login(req, res) {
     }
 
     const token = jwt.sign(
-      { id: utilisateur.id, email: utilisateur.email },
+      {
+        id: utilisateur.id,
+        email: utilisateur.email,
+        isAdmin: utilisateur.isAdmin,
+      },
       jwt_secret,
-      { expiresIn: "24h" },
+      { expiresIn: "1h" },
     );
 
     res.json({ token });
