@@ -1,6 +1,8 @@
 const jwt = require("jsonwebtoken");
 
-const cleSecrete = "cle_jwt_restaurant";
+// get in the .env file
+require("dotenv").config();
+const jwt_secret = process.env.JWT_SECRET;
 
 function authMiddleware(req, res, next) {
   const header = req.headers.authorization;
@@ -12,7 +14,7 @@ function authMiddleware(req, res, next) {
   const token = header.split(" ")[1];
 
   try {
-    const utilisateur = jwt.verify(token, cleSecrete);
+    const utilisateur = jwt.verify(token, jwt_secret);
 
     req.utilisateur = utilisateur;
 
