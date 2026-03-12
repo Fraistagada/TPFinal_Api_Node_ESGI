@@ -28,7 +28,7 @@ async function getMyReservations(req, res) {
   }
 }
 
-async function creerReservation(req, res) {
+async function addReservation(req, res) {
   const { name, phone, number_of_people, date, time, note } = req.body;
 
   const user_id = req.utilisateur.id;
@@ -98,4 +98,91 @@ async function creerReservation(req, res) {
   }
 }
 
-module.exports = { getReservations, getMyReservations, creerReservation };
+async function updateReservation(req, res) {
+  const reservation_id = req.params.id;
+  const { name, phone, number_of_people, date, time, note } = req.body;
+
+  try {
+    const [reservations] = await db.query(
+      "SELECT * FROM reservations WHERE id = ?",
+      [reservation_id],
+    );
+
+    if (reservations.length === 0) {
+      return res.status(404).json({ message: "Réservation introuvable" });
+    }
+
+    const reservation = reservations[0];
+
+    if (reservation.statut !== "pending") {
+      return res.status(400).json({ message: "Réservation non modifiable" });
+    }
+
+    await db.query(
+      `UPDATE reservations 
+SET name=?, phone=?, number_of_people=?, date=?, time=?, note=?
+WHERE id=?`,
+      [name, phone, number_of_people, date, time, note, reservation_id],
+    );
+
+    res.json({ message: "Réservation modifiée" });
+  } catch (erreur) {
+    res.status(500).json({ message: "Erreur serveur" });
+  }
+}
+
+async function deleteReservation(req, res) {
+  const reservation_id = req.params.id;
+
+  try {
+    await db.query(
+      "UPDATE reservations SET statut='cancelled' WHERE id=?",
+      [reservation_id],
+    );
+
+    res.json({ message: "Réservation annulée" });
+  } catch (erreur) {
+    res.status(500).json({ message: "Erreur serveur" });
+  }
+}
+
+async function validateReservation(req, res) {
+  const reservation_id = req.params.id;
+
+  if (!req.utilisateur.isAdmin) {
+    return res.status(403).json({ message: "Accès refusé" });
+  }
+
+  try {
+    const [reservations] = await db.query(
+      "SELECT statut FROM reservations WHERE id=?",
+      [reservation_id],
+    );
+
+    if (reservations.length === 0) {
+      return res.status(404).json({ message: "Réservation introuvable" });
+    }
+
+    if (reservations[0].statut !== "pending") {
+      return res.status(400).json({ message: "Réservation déjà traitée" });
+    }
+
+    await db.query(
+      "UPDATE reservations SET statut='confirmed' WHERE id=?",
+      [reservation_id],
+    );
+
+    res.json({ message: "Réservation confirmée" });
+  } catch (erreur) {
+    res.status(500).json({ message: "Erreur serveur" });
+  }
+}
+
+module.exports = {
+  getReservations,
+  getMyReservations,
+  addReservation,
+  updateReservation,
+  deleteReservation,
+  validateReservation,
+};
