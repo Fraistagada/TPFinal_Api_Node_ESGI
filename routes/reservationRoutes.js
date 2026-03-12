@@ -8,9 +8,11 @@ const {
   updateReservation,
   deleteReservation,
   validateReservation,
-} = require("../controleurs/reservationsControleur");
+  getReservations
+} = require("../controleurs/reservationControleur");
 
 router.post("/reservations", authMiddleware, addReservation);
+router.get("/reservations", authMiddleware, getReservations);
 router.put("/reservations/:id", authMiddleware, updateReservation);
 router.delete("/reservations/:id", authMiddleware, deleteReservation);
 router.patch("/reservations/:id/validate", authMiddleware, validateReservation);
