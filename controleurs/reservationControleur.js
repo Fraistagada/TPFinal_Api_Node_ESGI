@@ -6,7 +6,25 @@ async function getReservations(req, res) {
   }
 
   try {
-    const [reservations] = await db.query("SELECT * FROM reservations");
+    let sql = "SELECT * FROM reservations WHERE 1=1";
+    let params = [];
+
+    if (req.query.statut) {
+      sql += " AND statut = ?";
+      params.push(req.query.statut);
+    }
+
+    if (req.query.date) {
+      sql += " AND date = ?";
+      params.push(req.query.date);
+    }
+
+    if (req.query.user_id) {
+      sql += " AND user_id = ?";
+      params.push(req.query.user_id);
+    }
+
+    const [reservations] = await db.query(sql, params);
 
     res.json(reservations);
   } catch (erreur) {
@@ -18,10 +36,20 @@ async function getMyReservations(req, res) {
   const user_id = req.utilisateur.id;
 
   try {
-    const [reservations] = await db.query(
-      "SELECT * FROM reservations WHERE user_id = ?",
-      [user_id],
-    );
+    let sql = "SELECT * FROM reservations WHERE user_id = ?";
+    let params = [user_id];
+
+    if (req.query.statut) {
+      sql += " AND statut = ?";
+      params.push(req.query.statut);
+    }
+
+    if (req.query.date) {
+      sql += " AND date = ?";
+      params.push(req.query.date);
+    }
+
+    const [reservations] = await db.query(sql, params);
     res.json(reservations);
   } catch (erreur) {
     res.status(500).json({ message: "Erreur serveur" });
@@ -46,7 +74,7 @@ async function addReservation(req, res) {
       `SELECT tr.table_id
              FROM reservation_tables tr
              JOIN reservations r ON r.id = tr.reservation_id
-             WHERE r.date = ? AND r.time = ?`,
+             WHERE r.date = ? AND r.time = ? AND r.statut != 'cancelled'`,
       [date, time],
     );
 
@@ -74,7 +102,7 @@ async function addReservation(req, res) {
     }
 
     const [resultat] = await db.query(
-      `INSERT INTO reservations 
+      `INSERT INTO reservations
             (user_id, name, phone, number_of_people, date, time, note, statut)
             VALUES (?, ?, ?, ?, ?, ?, ?, 'en_attente')`,
       [user_id, name, phone, number_of_people, date, time, note],
@@ -88,6 +116,8 @@ async function addReservation(req, res) {
         [reservation_id, table.id],
       );
     }
+
+    console.log("[NOTIFICATION] Nouvelle réservation #" + reservation_id + " créée par l'utilisateur #" + user_id + " pour le " + date + " à " + time);
 
     res.json({
       message: "Réservation créée",
@@ -114,16 +144,18 @@ async function updateReservation(req, res) {
 
     const reservation = reservations[0];
 
-    if (reservation.statut !== "pending") {
+    if (reservation.statut !== "en_attente") {
       return res.status(400).json({ message: "Réservation non modifiable" });
     }
 
     await db.query(
-      `UPDATE reservations 
+      `UPDATE reservations
 SET name=?, phone=?, number_of_people=?, date=?, time=?, note=?
 WHERE id=?`,
       [name, phone, number_of_people, date, time, note, reservation_id],
     );
+
+    console.log("[NOTIFICATION] Réservation #" + reservation_id + " modifiée");
 
     res.json({ message: "Réservation modifiée" });
   } catch (erreur) {
@@ -139,6 +171,8 @@ async function deleteReservation(req, res) {
       "UPDATE reservations SET statut='cancelled' WHERE id=?",
       [reservation_id],
     );
+
+    console.log("[NOTIFICATION] Réservation #" + reservation_id + " annulée");
 
     res.json({ message: "Réservation annulée" });
   } catch (erreur) {
@@ -163,7 +197,7 @@ async function validateReservation(req, res) {
       return res.status(404).json({ message: "Réservation introuvable" });
     }
 
-    if (reservations[0].statut !== "pending") {
+    if (reservations[0].statut !== "en_attente") {
       return res.status(400).json({ message: "Réservation déjà traitée" });
     }
 
@@ -171,6 +205,8 @@ async function validateReservation(req, res) {
       "UPDATE reservations SET statut='confirmed' WHERE id=?",
       [reservation_id],
     );
+
+    console.log("[NOTIFICATION] Réservation #" + reservation_id + " confirmée par l'admin");
 
     res.json({ message: "Réservation confirmée" });
   } catch (erreur) {
