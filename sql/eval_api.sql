@@ -27,6 +27,9 @@ SET time_zone = "+00:00";
 -- Structure de la table `utilisateurs`
 --
 
+CREATE DATABASE IF NOT EXISTS `eval_api` DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci;
+USE `eval_api`;
+
 DROP TABLE IF EXISTS `utilisateurs`;
 CREATE TABLE IF NOT EXISTS `utilisateurs` (
   `id` int NOT NULL AUTO_INCREMENT,
@@ -86,7 +89,7 @@ CREATE TABLE IF NOT EXISTS `reservations` (
   `date` date NOT NULL,
   `time` time NOT NULL,
   `note` text,
-  `statut` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT 'en_attente',
+  `statut` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT 'pending',
   `date_creation` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
   KEY `user_id` (`user_id`)
@@ -97,7 +100,7 @@ CREATE TABLE IF NOT EXISTS `reservations` (
 --
 
 INSERT INTO `reservations` (`id`, `user_id`, `name`, `phone`, `number_of_people`, `date`, `time`, `note`, `statut`, `date_creation`) VALUES
-(1, 1, 'Jean Dupont', '0785730498', 5, '2026-03-20', '19:00:00', 'Anniversaire', 'en_attente', '2026-03-11 17:14:11'),
+(1, 1, 'Jean Dupont', '0785730498', 5, '2026-03-20', '19:00:00', 'Anniversaire', 'pending', '2026-03-11 17:14:11'),
 (2, 2, 'Marie Martin', '0612345678', 2, '2026-03-21', '20:00:00', 'Dîner romantique', 'confirmed', '2026-03-11 17:29:24');
 
 -- --------------------------------------------------------
