@@ -104,7 +104,7 @@ async function addReservation(req, res) {
     const [resultat] = await db.query(
       `INSERT INTO reservations
             (user_id, name, phone, number_of_people, date, time, note, statut)
-            VALUES (?, ?, ?, ?, ?, ?, ?, 'en_attente')`,
+            VALUES (?, ?, ?, ?, ?, ?, ?, 'pending')`,
       [user_id, name, phone, number_of_people, date, time, note],
     );
 
@@ -117,7 +117,16 @@ async function addReservation(req, res) {
       );
     }
 
-    console.log("[NOTIFICATION] Nouvelle réservation #" + reservation_id + " créée par l'utilisateur #" + user_id + " pour le " + date + " à " + time);
+    console.log(
+      "[NOTIFICATION] Nouvelle réservation #" +
+        reservation_id +
+        " créée par l'utilisateur #" +
+        user_id +
+        " pour le " +
+        date +
+        " à " +
+        time,
+    );
 
     res.json({
       message: "Réservation créée",
@@ -144,7 +153,7 @@ async function updateReservation(req, res) {
 
     const reservation = reservations[0];
 
-    if (reservation.statut !== "en_attente") {
+    if (reservation.statut !== "pending") {
       return res.status(400).json({ message: "Réservation non modifiable" });
     }
 
@@ -165,12 +174,26 @@ WHERE id=?`,
 
 async function deleteReservation(req, res) {
   const reservation_id = req.params.id;
+  const user_id = req.utilisateur.id;
+  const isAdmin = req.utilisateur.isAdmin;
 
   try {
-    await db.query(
-      "UPDATE reservations SET statut='cancelled' WHERE id=?",
+    const [reservations] = await db.query(
+      "SELECT user_id FROM reservations WHERE id=?",
       [reservation_id],
     );
+
+    if (reservations.length === 0) {
+      return res.status(404).json({ message: "Réservation introuvable" });
+    }
+
+    if (!isAdmin && reservations[0].user_id !== user_id) {
+      return res.status(403).json({ message: "Accès refusé" });
+    }
+
+    await db.query("UPDATE reservations SET statut='cancelled' WHERE id=?", [
+      reservation_id,
+    ]);
 
     console.log("[NOTIFICATION] Réservation #" + reservation_id + " annulée");
 
@@ -197,16 +220,19 @@ async function validateReservation(req, res) {
       return res.status(404).json({ message: "Réservation introuvable" });
     }
 
-    if (reservations[0].statut !== "en_attente") {
+    if (reservations[0].statut !== "pending") {
       return res.status(400).json({ message: "Réservation déjà traitée" });
     }
 
-    await db.query(
-      "UPDATE reservations SET statut='confirmed' WHERE id=?",
-      [reservation_id],
-    );
+    await db.query("UPDATE reservations SET statut='confirmed' WHERE id=?", [
+      reservation_id,
+    ]);
 
-    console.log("[NOTIFICATION] Réservation #" + reservation_id + " confirmée par l'admin");
+    console.log(
+      "[NOTIFICATION] Réservation #" +
+        reservation_id +
+        " confirmée par l'admin",
+    );
 
     res.json({ message: "Réservation confirmée" });
   } catch (erreur) {

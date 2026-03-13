@@ -80,33 +80,33 @@ Le payload du token contient : `{ id, email, isAdmin }`.
 | DELETE  | `/reservations/:id`          |     Oui      |       Non        | Annuler une réservation        |
 | PATCH   | `/reservations/:id/validate` |     Oui      |       Oui        | Confirmer une réservation      |
 
-**Filtres GET /reservations et /my-reservations :** `?statut=en_attente` `?date=2026-03-20` `?user_id=1` (admin seulement)
+**Filtres GET /reservations et /my-reservations :** `?statut=pending` `?date=2026-03-20` `?user_id=1` (admin seulement)
 
 ### Tables du restaurant
 
-| Méthode | Route         | Auth requise | Admin uniquement | Description                |
-| ------- | ------------- | :----------: | :--------------: | -------------------------- |
-| GET     | `/tables`     |     Non      |       Non        | Lister les tables          |
-| POST    | `/tables`     |     Oui      |       Oui        | Ajouter une table          |
-| PUT     | `/tables/:id` |     Oui      |       Oui        | Modifier une table         |
-| DELETE  | `/tables/:id` |     Oui      |       Oui        | Supprimer une table        |
+| Méthode | Route         | Auth requise | Admin uniquement | Description         |
+| ------- | ------------- | :----------: | :--------------: | ------------------- |
+| GET     | `/tables`     |     Non      |       Non        | Lister les tables   |
+| POST    | `/tables`     |     Oui      |       Oui        | Ajouter une table   |
+| PUT     | `/tables/:id` |     Oui      |       Oui        | Modifier une table  |
+| DELETE  | `/tables/:id` |     Oui      |       Oui        | Supprimer une table |
 
 ### Disponibilités
 
-| Méthode | Route              | Auth requise | Admin uniquement | Description                              |
-| ------- | ------------------ | :----------: | :--------------: | ---------------------------------------- |
-| GET     | `/disponibilites`  |     Non      |       Non        | Voir les tables dispo pour un créneau    |
+| Méthode | Route             | Auth requise | Admin uniquement | Description                           |
+| ------- | ----------------- | :----------: | :--------------: | ------------------------------------- |
+| GET     | `/disponibilites` |     Non      |       Non        | Voir les tables dispo pour un créneau |
 
 **Paramètres requis :** `?date=2026-03-20&time=19:00:00`
 
 ### Créneaux d'ouverture
 
-| Méthode | Route           | Auth requise | Admin uniquement | Description            |
-| ------- | --------------- | :----------: | :--------------: | ---------------------- |
-| GET     | `/creneaux`     |     Non      |       Non        | Lister les créneaux    |
-| POST    | `/creneaux`     |     Oui      |       Oui        | Ajouter un créneau     |
-| PUT     | `/creneaux/:id` |     Oui      |       Oui        | Modifier un créneau    |
-| DELETE  | `/creneaux/:id` |     Oui      |       Oui        | Supprimer un créneau   |
+| Méthode | Route           | Auth requise | Admin uniquement | Description          |
+| ------- | --------------- | :----------: | :--------------: | -------------------- |
+| GET     | `/creneaux`     |     Non      |       Non        | Lister les créneaux  |
+| POST    | `/creneaux`     |     Oui      |       Oui        | Ajouter un créneau   |
+| PUT     | `/creneaux/:id` |     Oui      |       Oui        | Modifier un créneau  |
+| DELETE  | `/creneaux/:id` |     Oui      |       Oui        | Supprimer un créneau |
 
 **Filtre GET /creneaux :** `?jour=lundi`
 
@@ -180,7 +180,7 @@ Récupérer la liste des plats du menu.
     "id": 1,
     "nom": "Salade César",
     "description": "Salade romaine, poulet grillé, parmesan",
-    "prix": 12.50,
+    "prix": 12.5,
     "categorie": "entrée"
   }
 ]
@@ -200,7 +200,7 @@ Ajouter un plat au menu (admin uniquement).
 {
   "nom": "Pavé de thon",
   "description": "Thon mi-cuit aux sésames",
-  "prix": 18.00,
+  "prix": 18.0,
   "categorie": "plat"
 }
 ```
@@ -245,7 +245,7 @@ Lister toutes les réservations (accès admin uniquement).
 
 **Auth :** JWT requis + rôle admin
 
-**Filtres optionnels :** `?statut=en_attente` `?date=2026-03-20` `?user_id=1`
+**Filtres optionnels :** `?statut=pending` `?date=2026-03-20` `?user_id=1`
 
 ---
 
@@ -255,13 +255,13 @@ Voir ses propres réservations.
 
 **Auth :** JWT requis (tout utilisateur connecté)
 
-**Filtres optionnels :** `?statut=en_attente` `?date=2026-03-20`
+**Filtres optionnels :** `?statut=pending` `?date=2026-03-20`
 
 ---
 
 ### PUT /reservations/:id
 
-Modifier une réservation existante. Uniquement si son statut est `en_attente`.
+Modifier une réservation existante. Uniquement si son statut est `pending`.
 
 **Auth :** JWT requis (tout utilisateur connecté)
 
@@ -309,17 +309,18 @@ Voir les tables disponibles pour un créneau donné.
 
 ## Statuts de réservation
 
-| Statut       | Description                                 |
-| ------------ | ------------------------------------------- |
-| `en_attente` | Réservation créée, en attente de traitement |
-| `confirmed`  | Confirmée par un admin                      |
-| `cancelled`  | Annulée                                     |
+| Statut      | Description                                 |
+| ----------- | ------------------------------------------- |
+| `pending`   | Réservation créée, en attente de traitement |
+| `confirmed` | Confirmée par un admin                      |
+| `cancelled` | Annulée                                     |
 
 ---
 
 ## Notifications
 
 Toutes les actions importantes sont loguées dans la console du serveur avec le préfixe `[NOTIFICATION]` :
+
 - Création / modification / annulation de réservation
 - Ajout / modification / suppression de plats, tables et créneaux
 - Confirmation de réservation par un admin
