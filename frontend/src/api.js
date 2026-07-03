@@ -52,7 +52,14 @@ export const api = {
 
   getMyReservations: () => request('/my-reservations'),
 
-  getAllReservations: () => request('/reservations'),
+  getAllReservations: ({ date, status } = {}) => {
+    const params = new URLSearchParams()
+    if (date) params.set('date', date)
+    if (status) params.set('statut', status)
+
+    const queryString = params.toString()
+    return request(queryString ? `/reservations?${queryString}` : '/reservations')
+  },
 
   createReservation: (payload) =>
     request('/reservations', { method: 'POST', body: JSON.stringify(payload) }),

@@ -54,6 +54,27 @@ td {
   color: #080;
 }
 
+.admin-filters {
+  display: flex;
+  gap: 0.75rem;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  margin: 1rem 0;
+  max-width: none;
+}
+
+.admin-filters label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  font-size: 0.9rem;
+}
+
+.admin-filters input,
+.admin-filters select {
+  min-width: 180px;
+}
+
 .loading {
   display: inline-flex;
   align-items: center;

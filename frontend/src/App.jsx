@@ -259,16 +259,52 @@ function AdminPage() {
   const [reservations, setReservations] = useState([])
   const [error, setError] = useState('')
   const [isLoading, setIsLoading] = useState(true)
+  const [filters, setFilters] = useState(() => {
+    const searchParams = new URLSearchParams(window.location.search)
+    return {
+      date: searchParams.get('date') || '',
+      status: searchParams.get('status') || '',
+    }
+  })
 
-  function load() {
+  function load(currentFilters = filters) {
     setIsLoading(true)
-    api.getAllReservations()
+    setError('')
+    api.getAllReservations(currentFilters)
       .then(setReservations)
       .catch((e) => setError(e.message))
       .finally(() => setIsLoading(false))
   }
 
-  useEffect(load, [])
+  useEffect(() => {
+    load()
+  }, [filters.date, filters.status])
+
+  useEffect(() => {
+    const params = new URLSearchParams()
+
+    if (filters.date) {
+      params.set('date', filters.date)
+    }
+
+    if (filters.status) {
+      params.set('status', filters.status)
+    }
+
+    const queryString = params.toString()
+    const nextUrl = `${window.location.pathname}${queryString ? `?${queryString}` : ''}`
+    window.history.replaceState({}, '', nextUrl)
+  }, [filters.date, filters.status])
+
+  function updateFilter(field) {
+    return (e) => {
+      setFilters((currentFilters) => ({ ...currentFilters, [field]: e.target.value }))
+    }
+  }
+
+  function resetFilters() {
+    setFilters({ date: '', status: '' })
+  }
 
   async function validate(id) {
     setError('')
@@ -295,6 +331,22 @@ function AdminPage() {
     <div>
       <h2>Réservations (admin)</h2>
       {isLoading && <LoadingMessage />}
+      <div className="admin-filters">
+        <label>
+          Date
+          <input type="date" value={filters.date} onChange={updateFilter('date')} />
+        </label>
+        <label>
+          Statut
+          <select value={filters.status} onChange={updateFilter('status')}>
+            <option value="">Tous</option>
+            <option value="pending">En attente</option>
+            <option value="confirmed">Confirmée</option>
+            <option value="cancelled">Annulée</option>
+          </select>
+        </label>
+        <button type="button" onClick={resetFilters}>Réinitialiser</button>
+      </div>
       {error && <p className="error">{error}</p>}
       <table>
         <thead>
