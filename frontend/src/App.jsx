@@ -2,6 +2,15 @@ import { useEffect, useState } from 'react'
 import { api, getUser, setToken, clearToken } from './api'
 import './App.css'
 
+function LoadingMessage() {
+  return (
+    <div className="loading" aria-live="polite" aria-busy="true">
+      <span className="spinner" aria-hidden="true" />
+      <span>Loading…</span>
+    </div>
+  )
+}
+
 function Nav({ user, page, setPage, onLogout }) {
   return (
     <nav className="nav">
@@ -34,9 +43,14 @@ function Nav({ user, page, setPage, onLogout }) {
 function MenuPage() {
   const [plats, setPlats] = useState([])
   const [error, setError] = useState('')
+  const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
-    api.getMenu().then(setPlats).catch((e) => setError(e.message))
+    setIsLoading(true)
+    api.getMenu()
+      .then(setPlats)
+      .catch((e) => setError(e.message))
+      .finally(() => setIsLoading(false))
   }, [])
 
   const categories = [...new Set(plats.map((p) => p.categorie || 'Autre'))]
@@ -44,6 +58,7 @@ function MenuPage() {
   return (
     <div>
       <h2>Menu</h2>
+      {isLoading && <LoadingMessage />}
       {error && <p className="error">{error}</p>}
       {categories.map((cat) => (
         <div key={cat}>
@@ -66,10 +81,12 @@ function LoginPage({ onLoggedIn, setPage }) {
   const [email, setEmail] = useState('')
   const [motDePasse, setMotDePasse] = useState('')
   const [error, setError] = useState('')
+  const [isLoading, setIsLoading] = useState(false)
 
   async function submit(e) {
     e.preventDefault()
     setError('')
+    setIsLoading(true)
     try {
       const { token } = await api.login(email, motDePasse)
       setToken(token)
@@ -77,6 +94,8 @@ function LoginPage({ onLoggedIn, setPage }) {
       setPage('menu')
     } catch (err) {
       setError(err.message)
+    } finally {
+      setIsLoading(false)
     }
   }
 
@@ -86,8 +105,9 @@ function LoginPage({ onLoggedIn, setPage }) {
       <form onSubmit={submit}>
         <input type="email" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} required />
         <input type="password" placeholder="Mot de passe" value={motDePasse} onChange={(e) => setMotDePasse(e.target.value)} required />
-        <button type="submit">Se connecter</button>
+        <button type="submit" disabled={isLoading}>Se connecter</button>
       </form>
+      {isLoading && <LoadingMessage />}
       {error && <p className="error">{error}</p>}
     </div>
   )
@@ -98,15 +118,19 @@ function SignupPage({ setPage }) {
   const [motDePasse, setMotDePasse] = useState('')
   const [error, setError] = useState('')
   const [done, setDone] = useState(false)
+  const [isLoading, setIsLoading] = useState(false)
 
   async function submit(e) {
     e.preventDefault()
     setError('')
+    setIsLoading(true)
     try {
       await api.signup(email, motDePasse)
       setDone(true)
     } catch (err) {
       setError(err.message)
+    } finally {
+      setIsLoading(false)
     }
   }
 
@@ -126,8 +150,9 @@ function SignupPage({ setPage }) {
       <form onSubmit={submit}>
         <input type="email" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} required />
         <input type="password" placeholder="Mot de passe" value={motDePasse} onChange={(e) => setMotDePasse(e.target.value)} required />
-        <button type="submit">S'inscrire</button>
+        <button type="submit" disabled={isLoading}>S'inscrire</button>
       </form>
+      {isLoading && <LoadingMessage />}
       {error && <p className="error">{error}</p>}
     </div>
   )
@@ -136,9 +161,14 @@ function SignupPage({ setPage }) {
 function MyReservationsPage() {
   const [reservations, setReservations] = useState([])
   const [error, setError] = useState('')
+  const [isLoading, setIsLoading] = useState(true)
 
   function load() {
-    api.getMyReservations().then(setReservations).catch((e) => setError(e.message))
+    setIsLoading(true)
+    api.getMyReservations()
+      .then(setReservations)
+      .catch((e) => setError(e.message))
+      .finally(() => setIsLoading(false))
   }
 
   useEffect(load, [])
@@ -156,6 +186,7 @@ function MyReservationsPage() {
   return (
     <div>
       <h2>Mes réservations</h2>
+      {isLoading && <LoadingMessage />}
       {error && <p className="error">{error}</p>}
       <ul>
         {reservations.map((r) => (
@@ -176,6 +207,7 @@ function NewReservationPage({ setPage }) {
   const [form, setForm] = useState({ name: '', phone: '', number_of_people: '', date: today, time: '', note: '' })
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
+  const [isLoading, setIsLoading] = useState(false)
 
   function update(field) {
     return (e) => setForm({ ...form, [field]: e.target.value })
@@ -185,9 +217,11 @@ function NewReservationPage({ setPage }) {
     e.preventDefault()
     setError('')
     setSuccess('')
+    setIsLoading(true)
 
     if (form.date < today) {
       setError('La date doit être aujourd\'hui ou plus tard')
+      setIsLoading(false)
       return
     }
 
@@ -197,6 +231,8 @@ function NewReservationPage({ setPage }) {
       setTimeout(() => setPage('my-reservations'), 1000)
     } catch (err) {
       setError(err.message)
+    } finally {
+      setIsLoading(false)
     }
   }
 
@@ -210,8 +246,9 @@ function NewReservationPage({ setPage }) {
         <input type="date" min={today} value={form.date} onChange={update('date')} required />
         <input type="time" value={form.time} onChange={update('time')} required />
         <textarea placeholder="Note" value={form.note} onChange={update('note')} />
-        <button type="submit">Réserver</button>
+        <button type="submit" disabled={isLoading}>Réserver</button>
       </form>
+      {isLoading && <LoadingMessage />}
       {error && <p className="error">{error}</p>}
       {success && <p className="success">{success}</p>}
     </div>
@@ -221,9 +258,14 @@ function NewReservationPage({ setPage }) {
 function AdminPage() {
   const [reservations, setReservations] = useState([])
   const [error, setError] = useState('')
+  const [isLoading, setIsLoading] = useState(true)
 
   function load() {
-    api.getAllReservations().then(setReservations).catch((e) => setError(e.message))
+    setIsLoading(true)
+    api.getAllReservations()
+      .then(setReservations)
+      .catch((e) => setError(e.message))
+      .finally(() => setIsLoading(false))
   }
 
   useEffect(load, [])
@@ -248,9 +290,11 @@ function AdminPage() {
     }
   }
 
+
   return (
     <div>
       <h2>Réservations (admin)</h2>
+      {isLoading && <LoadingMessage />}
       {error && <p className="error">{error}</p>}
       <table>
         <thead>
